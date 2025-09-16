@@ -8,7 +8,7 @@ These packages were developed by [Thanh](https://sites.google.com/view/vuthanhcd
 
 This project is built on the Agilex Scout Mini Omni platform. The directory structure is as follows:
 ```
-ral/
+exhibition/
 ├── genbot                          // Original packages
 │   ├──  scout_ros2                 // Genbot-specific ROS2 packages
 |   |   ├── scout_base              // Core functions for Genbot
@@ -66,7 +66,7 @@ sudo apt-get install ros-$ROS_DISTRO-joy ros-$ROS_DISTRO-teleop-twist-joy \
   ros-$ROS_DISTRO-ros-core\
   ros-$ROS_DISTRO-geometry2\
   ros-$ROS_DISTRO-tf2-sensor-msgs\
-  ros-$ROS_DISTRO-spatio-temporal-voxel-layer\
+  ros-$ROS_DISTRO-spatio-tempoexhibition-voxel-layer\
   libompl-dev\
   xterm\
   ros-$ROS_DISTRO-zed-msgs\
@@ -84,13 +84,13 @@ sudo apt-get install ros-$ROS_DISTRO-joy ros-$ROS_DISTRO-teleop-twist-joy \
 
 Run the following commands to set up the workspace and install the required packages:
 ```bash
-mkdir -p ~/ral_ws/src
-cd ~/ral_ws/src/
-git clone git@github.com:vuthanhcdt/ral.git
-cd ~/ral_ws
+mkdir -p ~/exhibition_ws/src
+cd ~/exhibition_ws/src/
+git clone git@github.com:vuthanhcdt/exhibition.git
+cd ~/exhibition_ws
 rosdep install --from-paths src --ignore-src -r -y
 colcon build --symlink-install
-echo "source ~/ral_ws/install/setup.bash" >> ~/.bashrc
+echo "source ~/exhibition_ws/install/setup.bash" >> ~/.bashrc
 pip3 install pytorch-mppi
 ```
 
