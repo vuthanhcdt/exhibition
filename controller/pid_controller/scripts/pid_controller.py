@@ -4,6 +4,8 @@ from rclpy.node import Node
 from geometry_msgs.msg import Pose, Twist
 import math
 from tf2_ros import TransformListener, Buffer, LookupException, ConnectivityException, ExtrapolationException
+from std_msgs.msg import Int32
+from scout_msgs.msg import ScoutRCState
 
 
 class PIDController(Node):
@@ -28,6 +30,20 @@ class PIDController(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
+        self.human_state = 0  # Lưu trạng thái human_state (0 hoặc 1)
+        self.human_state_sub = self.create_subscription(
+            Int32,
+            'human_state',
+            self.human_state_callback,
+            10
+        )
+        self.rc_sub = self.create_subscription(ScoutRCState,'/scout_rc_state', self.rc_callback,5)
+        self.follow_mode = 0
+    def human_state_callback(self, msg):
+        self.human_state = msg.data
+        # self.get_logger().info(f"Received human_state: {self.human_state}")
+        
+
     def PID(self, error, Kp):
         output = Kp * error
         return output
@@ -39,10 +55,10 @@ class PIDController(Node):
                 source_frame,
                 rclpy.time.Time()
             )
-            self.get_logger().info(
-                f"Transform from {source_frame} to {target_frame}: "
-                f"translation=({t.transform.translation.x}, {t.transform.translation.y}, {t.transform.translation.z})"
-            )
+            # self.get_logger().info(
+            #     f"Transform from {source_frame} to {target_frame}: "
+            #     f"translation=({t.transform.translation.x}, {t.transform.translation.y}, {t.transform.translation.z})"
+            # )
             return t
         except (LookupException, ConnectivityException, ExtrapolationException) as e:
             self.get_logger().warn(f"Could not get transform from {source_frame} to {target_frame}: {e}")
@@ -65,9 +81,14 @@ class PIDController(Node):
         # self.get_logger().info(f"Received pose: x={msg.position.x}, y={msg.position.y}, distance={self.distance_robot_human}, angle={self.relative_angle}")
         self.current_pose = msg
 
+    def rc_callback(self, msg):
+      self.follow_mode = msg.swa
+
+
     def timer_callback(self):
         right_tf = self.get_transform('base_link', 'right_following')
         left_tf = self.get_transform('base_link', 'left_following')
+        center_tf = self.get_transform('base_link', 'human_link')
         self.cmd = Twist()
 
         # Tính khoảng cách nếu có transform
@@ -81,34 +102,56 @@ class PIDController(Node):
             right_x = right_tf.transform.translation.x
             right_y = right_tf.transform.translation.y
             right_dist = math.hypot(right_x, right_y)
+        if center_tf is not None:
+            center_x = center_tf.transform.translation.x
+            center_y = center_tf.transform.translation.y
+            center_dist = math.hypot(center_x, center_y)
 
         # Chọn transform gần nhất
         chosen_tf = None
-        if left_dist is not None and right_dist is not None:
-            if left_dist <= right_dist:
+
+        if self.follow_mode > 0:
+            if left_dist is not None and right_dist is not None:
+                if left_dist <= right_dist:
+                    chosen_tf = left_tf
+                else:
+                    chosen_tf = right_tf
+            elif left_dist is not None:
                 chosen_tf = left_tf
-            else:
+            elif right_dist is not None:
                 chosen_tf = right_tf
-        elif left_dist is not None:
-            chosen_tf = left_tf
-        elif right_dist is not None:
-            chosen_tf = right_tf
+            offset_distane = 0.0
+        else:
+            chosen_tf = center_tf
+            offset_distane = 1.0
 
         # Điều khiển robot theo transform gần nhất
         if chosen_tf is not None:
             error_x = chosen_tf.transform.translation.x
             error_y = chosen_tf.transform.translation.y
             distance = math.hypot(error_x, error_y)
-            linear_x = self.PID(distance - 0.3, 1.0)  # Giữ khoảng cách 0.3m (bạn có thể đổi)
+            linear_x = self.PID(distance - offset_distane, 1.0)  # Giữ khoảng cách 1.0m (bạn có thể đổi)
             linear_x = max(min(linear_x, 2.0), -1.5)
             relative_angle = math.atan2(error_y, error_x)
+            if error_x<-0.5:
+                linear_x = 0.0
+            # print(relative_angle)
             angular_z = self.PID(relative_angle, 2.0)
-            if abs(linear_x) < 0.05:
-                angular_z = 0.0
             angular_z = max(min(angular_z, 1.0), -1.0)
-            self.cmd.linear.x = linear_x
-            self.cmd.angular.z = angular_z
-            self.cmd_pub.publish(self.cmd)
+            if center_dist>0.5:
+                if self.human_state == 1:
+                    self.cmd.linear.x = linear_x
+                    self.cmd.angular.z = angular_z
+                    self.cmd_pub.publish(self.cmd)
+                elif self.human_state == 0:
+                    self.cmd.linear.x = 0.0
+                    self.cmd.angular.z = 0.0
+                    self.cmd_pub.publish(self.cmd)
+            else:
+                self.cmd.linear.x = 0.0
+                self.cmd.angular.z = 0.0
+                self.cmd_pub.publish(self.cmd)
+
 
 def main(args=None):
     rclpy.init(args=args)

@@ -16,6 +16,8 @@ from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from geometry_msgs.msg import Twist, Pose,  Point, Quaternion
 from nav_msgs.msg import Odometry
+from std_msgs.msg import Int32
+
 
 class GimbalTracking(Node):
     def __init__(self):
@@ -48,6 +50,7 @@ class GimbalTracking(Node):
         self.interactive_space = self.create_publisher(MarkerArray, 'interactive_space', 3)
         self.human_pose_pub = self.create_publisher(Odometry, 'human_global_pose', 10)
         self.human_robot_pub = self.create_publisher(Odometry, 'human_robot_pos', 10)
+        self.human_state_pub = self.create_publisher(Int32, 'human_state', 10)
         self.x_vals, self.y_vals = self.generate_ellipse_points(self.semi_major_axis, self.semi_minor_axis, self.num_points)
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
@@ -133,6 +136,7 @@ class GimbalTracking(Node):
 
     def skeletons_callback(self, msg):
         closest_human = None
+        action_state = Int32()
         min_distance = float('inf')
         max_tracking_distance = 3.0  # Giới hạn khoảng cách để tracking
         reacquire_distance = 2.0     # Khoảng cách tối đa để tìm người mới nếu bị mất quá lâu
@@ -163,6 +167,9 @@ class GimbalTracking(Node):
             if closest_human is not None:
                 self.human = closest_human
                 self.locked_id = closest_human.label_id
+                self.action_state = closest_human.action_state
+                action_state.data = self.action_state 
+                self.human_state_pub.publish(action_state)
                 self.detect_human = True
                 self.get_logger().info(f"Locked on person ID {self.locked_id} at distance {min_distance:.2f} m")
             else:
@@ -183,6 +190,9 @@ class GimbalTracking(Node):
 
             if closest_human is not None:
                 self.human = closest_human
+                self.action_state = closest_human.action_state
+                action_state.data = self.action_state 
+                self.human_state_pub.publish(action_state)
                 self.detect_human = True
                 # self.get_logger().info(f"Tracking locked person, now closest match at {min_distance:.2f} and distance {distance:.2f} m")
             else:

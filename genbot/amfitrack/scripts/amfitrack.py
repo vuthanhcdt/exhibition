@@ -145,7 +145,7 @@ class Gen3Publisher(Node):
         self.transformStamped.child_frame_id = self.tf_child_name
 
         raw_angle = self.quaternion_to_yaw([0.0, 0.0, payload.emf.quat_z, payload.emf.quat_w])
-        alpha = 0.2
+        alpha = 0.01
         self.filtered_angle = alpha * raw_angle + (1 - alpha) * self.prev_angle
         self.prev_angle = self.filtered_angle
 
