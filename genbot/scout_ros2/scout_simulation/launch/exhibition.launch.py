@@ -50,7 +50,7 @@ def generate_launch_description():
         arguments=['-d', os.path.join(pkg_urdf_path, 'rviz', 'scout_simulation.rviz')],
         condition=IfCondition(LaunchConfiguration('rviz')),
         parameters=[
-            {'use_sim_time': True},
+            {'use_sim_time': False},
         ]
     )
 
@@ -65,7 +65,7 @@ def generate_launch_description():
         ],
         output="screen",
         parameters=[
-            {'use_sim_time': True},
+            {'use_sim_time': False},
         ]
     )
 
@@ -76,7 +76,7 @@ def generate_launch_description():
         output='screen',
         parameters=[
             {'robot_description': Command(['xacro', ' ', urdf_file_path]),
-             'use_sim_time': True},
+             'use_sim_time': False},
         ],
         remappings=[
             ('/tf', 'tf'),
@@ -110,7 +110,7 @@ def generate_launch_description():
         ],
         output="screen",
         parameters=[
-            {'use_sim_time': True},
+            {'use_sim_time': False},
         ]
     )
 

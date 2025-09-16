@@ -72,6 +72,8 @@ class Gen3Publisher(Node):
 
         self.velocity_x_history = []  
         self.velocity_y_history = []  
+        self.prev_angle = 0.0  # Thêm biến lưu góc trước đó
+        self.filtered_angle = 0.0
 
 
     def odom_callback(self, msg):
@@ -142,11 +144,18 @@ class Gen3Publisher(Node):
         self.transformStamped.header.frame_id = self.base_link
         self.transformStamped.child_frame_id = self.tf_child_name
 
+        raw_angle = self.quaternion_to_yaw([0.0, 0.0, payload.emf.quat_z, payload.emf.quat_w])
+        alpha = 0.2
+        self.filtered_angle = alpha * raw_angle + (1 - alpha) * self.prev_angle
+        self.prev_angle = self.filtered_angle
+
+        quat = self.yaw_to_quaternion(self.filtered_angle)
+
         self.transformStamped.transform.translation.x = payload.emf.pos_x * 0.001
         self.transformStamped.transform.translation.y = payload.emf.pos_y * 0.001
         self.transformStamped.transform.translation.z = 0.0
-        self.transformStamped.transform.rotation.z = payload.emf.quat_z
-        self.transformStamped.transform.rotation.w = payload.emf.quat_w
+        self.transformStamped.transform.rotation.z = quat[2]
+        self.transformStamped.transform.rotation.w = quat[3]
 
         self.broadcaster.sendTransform(self.transformStamped)
 
