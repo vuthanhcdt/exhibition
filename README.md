@@ -98,6 +98,6 @@ pip3 install pytorch-mppi
 
 
 ## TODO
-- [ ]
+- [Companion Controller for Non-Holonomic Robots]
 - [ ]
 - [ ]
