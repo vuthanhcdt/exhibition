@@ -42,8 +42,6 @@ ament_python_install_package(${PROJECT_NAME})
 
 # Install Python executables
 install(PROGRAMS
-  scripts/PID.py
-  scripts/DWA.py
   scripts/MPC.py
   DESTINATION lib/${PROJECT_NAME}
 )

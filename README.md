@@ -97,6 +97,14 @@ pip3 install pytorch-mppi
 ```
 
 
+## Simulation 
+#### Simulation S1
+```bash
+ros2 launch scout_simulation s1.launch.py 
+ros2 launch actor_control actor_control.launch.py config:=s1_params.yaml
+ros2 launch controller mpc.launch.py
+```
+
 ## TODO
 - [Companion Controller for Non-Holonomic Robots]
 - [ ]
