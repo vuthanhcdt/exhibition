@@ -95,46 +95,12 @@ pip3 install pytorch-mppi
 ```
 
 ## Simulation 
-#### Simulation S1
 ```bash
-ros2 launch scout_simulation s1.launch.py 
+ros2 launch scout_simulation exhibition.launch.py 
 ros2 launch actor_control actor_control.launch.py config:=s1_params.yaml
-ros2 launch actor_control actor_control.launch.py config:=s1_ped_params.yaml
-ros2 launch mppi_controller mppi_controller.launch.py config:=params_gazebo_s1.yaml
+ros2 launch pid_controller pid_controller.launch.py 
 ```
 
-#### Simulation S2
-```bash
-ros2 launch scout_simulation s2.launch.py 
-ros2 launch actor_control actor_control.launch.py config:=s2_params.yaml
-ros2 launch actor_control actor_control.launch.py config:=s2_ped_params.yaml
-ros2 launch mppi_controller mppi_controller.launch.py config:=params_gazebo_s2.yaml
-```
-
-
-#### Simulation S3
-```bash
-ros2 launch scout_simulation s3.launch.py 
-ros2 launch actor_control actor_control.launch.py config:=s3_params.yaml
-ros2 launch actor_control actor_control.launch.py config:=s3_ped_params.yaml
-ros2 launch mppi_controller mppi_controller.launch.py config:=params_gazebo_s3.yaml
-```
-
-#### Simulation S4
-```bash
-ros2 launch scout_simulation s4.launch.py 
-ros2 launch actor_control actor_control.launch.py config:=s4_params.yaml
-ros2 launch actor_control actor_control.launch.py config:=s4_ped_params.yaml
-ros2 launch mppi_controller mppi_controller.launch.py config:=params_gazebo_s4.yaml
-```
-
-#### Simulation S5
-```bash
-ros2 launch scout_simulation s5.launch.py 
-ros2 launch actor_control actor_control.launch.py config:=s5_params.yaml
-ros2 launch actor_control actor_control.launch.py config:=s5_ped_params.yaml
-ros2 launch mppi_controller mppi_controller.launch.py config:=params_gazebo_s5.yaml
-```
 
 #### Gazebo GUI Tip
 ```bash
@@ -156,6 +122,6 @@ ros2 launch gimbal_bringup gimbal_tracking.launch.py
 ```
 
 ## TODO
-- [ ] Human tracking with amfitrack and gimbal camera
+- [ ] Human tracking with gimbal camera
 - [ ] 
 - [ ] 

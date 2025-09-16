@@ -19,14 +19,26 @@ def generate_launch_description():
         LaunchConfiguration('config')
     ])
 
-    static_tf = launch_ros.actions.Node(
+    left_static_tf = launch_ros.actions.Node(
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_tf_designed_point',
         arguments=[
-            '0.3', '0.9', '0.0',          # x y z
+            '0.7', '0.9', '0.0',          # x y z
             '0', '0', '0',                # roll pitch yaw (rad)
-            'human_local_link', 'designed_point'
+            'human_link', 'left_following'
+        ],
+        output='screen'
+    )
+
+    right_static_tf = launch_ros.actions.Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='static_tf_designed_point',
+        arguments=[
+            '0.7', '-0.9', '0.0',          # x y z
+            '0', '0', '0',                # roll pitch yaw (rad)
+            'human_link', 'right_following'
         ],
         output='screen'
     )
@@ -41,6 +53,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         config_arg,
-        static_tf,
+        left_static_tf,
+        right_static_tf,
         node
     ])
