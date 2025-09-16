@@ -1,1 +1,103 @@
-# exhibition
+# Multimodal Interaction and Following for Human-Robot Companionship with Large Language Models
+
+These packages were developed by [Thanh](https://sites.google.com/view/vuthanhcdt/home) from the [Networked Robotic Systems Laboratory](https://sites.google.com/site/yenchenliuncku). If you use any packages from this repository, please cite this repository and our team.
+
+---
+
+## Overview
+
+This project is built on the Agilex Scout Mini Omni platform. The directory structure is as follows:
+```
+ral/
+├── genbot                          // Original packages
+│   ├──  scout_ros2                 // Genbot-specific ROS2 packages
+|   |   ├── scout_base              // Core functions for Genbot
+|   |   ├── scout_msgs              // Message definitions for Genbot
+|   |   ├── scout_simulation        // Simulation environment for Genbot
+|   |   ├── ugv_sdk                 // Data transmission protocol for Genbot
+|   |   ├── actor_control           // Control actor on Gazebo
+|   ├── lidar3d                     // Velodyne-related packages
+|   ├── amfitrack                   // Amfitrack packages
+|   ├── zed                         // Zed camera packages
+├── vlm_strategy                    // VLM strategy
+├── mppi_controller                 // Human-companion controller
+├── README.md
+
+```
+
+## Install Dependent ROS Packages
+
+Before proceeding, ensure you have the following installed and configured:  
+- **Jetson 6** with a compatible **JetPack** and **CUDA** version (required for Jetson Orin)  
+- **[ZED X Drivers](https://www.stereolabs.com/en-tw/developers/drivers)** and **[ZED X SDK](https://www.stereolabs.com/en-tw/developers/release)**  
+- **[ROS2 Humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)**  
+
+This project has been thoroughly tested on:  
+- **Ubuntu 24.04** with **ROS2 Jazzy** (on the host computer)  
+- **JetPack 6.2** (on the robot)  
+
+For optimal compatibility, it is highly recommended to use this setup. To install the required ROS packages, run the following command:  
+
+
+```bash
+sudo apt-get install ros-$ROS_DISTRO-joy ros-$ROS_DISTRO-teleop-twist-joy \
+  ros-$ROS_DISTRO-teleop-twist-keyboard ros-$ROS_DISTRO-laser-proc \
+  ros-$ROS_DISTRO-urdf ros-$ROS_DISTRO-xacro \
+  ros-$ROS_DISTRO-compressed-image-transport ros-$ROS_DISTRO-rqt\
+  ros-$ROS_DISTRO-interactive-markers \
+  ros-$ROS_DISTRO-slam-toolbox\
+  ros-$ROS_DISTRO-rqt ros-$ROS_DISTRO-rqt-common-plugins\
+  ros-$ROS_DISTRO-sophus\
+  ros-$ROS_DISTRO-robot-localization\
+  ros-$ROS_DISTRO-realsense2-camera\
+  ros-$ROS_DISTRO-realsense2-description\
+  build-essential git cmake libasio-dev\
+  ros-$ROS_DISTRO-tf2-geometry-msgs\
+  ros-$ROS_DISTRO-eigen-stl-containers\
+  ros-$ROS_DISTRO-ament-cmake-clang-format\
+  ros-$ROS_DISTRO-nmea-msgs\
+  ros-$ROS_DISTRO-mavros\
+  ros-$ROS_DISTRO-navigation2\
+  ros-$ROS_DISTRO-nav2-bringup\
+  ros-$ROS_DISTRO-bondcpp\
+  ros-$ROS_DISTRO-ompl\
+  ros-$ROS_DISTRO-pcl-ros\
+  ros-$ROS_DISTRO-sensor-msgs-py\
+  ros-$ROS_DISTRO-tf2-tools\
+  ros-$ROS_DISTRO-robot-state-publisher\
+  ros-$ROS_DISTRO-ros-core\
+  ros-$ROS_DISTRO-geometry2\
+  ros-$ROS_DISTRO-tf2-sensor-msgs\
+  ros-$ROS_DISTRO-spatio-temporal-voxel-layer\
+  libompl-dev\
+  xterm\
+  ros-$ROS_DISTRO-zed-msgs\
+  libpcap-dev\
+  ros-$ROS_DISTRO-plotjuggler-ros\
+  ros-$ROS_DISTRO-mola \
+  ros-$ROS_DISTRO-mola-state-estimation \
+  ros-$ROS_DISTRO-mola-lidar-odometry\
+  ros-${ROS_DISTRO}-ros-gz\
+  ros-${ROS_DISTRO}-velodyne\
+  ros-${ROS_DISTRO}-tf2-geometry-msgs\
+```
+
+## Install Genbot Packages
+
+Run the following commands to set up the workspace and install the required packages:
+```bash
+mkdir -p ~/exhibition_ws/src
+cd ~/exhibition_ws/src/
+git clone git@github.com:vuthanhcdt/exhibition.git
+cd ~/exhibition_ws
+rosdep install --from-paths src --ignore-src -r -y
+colcon build --symlink-install
+echo "source ~/exhibition_ws/install/setup.bash" >> ~/.bashrc
+pip3 install pytorch-mppi
+```
+
+
+## TODO
+- [ ]
+- [ ]
+- [ ]
