@@ -8,7 +8,7 @@ These packages were developed by [Thanh](https://sites.google.com/view/vuthanhcd
 
 This project is built on the Agilex Scout Mini Omni platform. The directory structure is as follows:
 ```
-ral/
+exhibition/
 ├── genbot                          // Original packages
 │   ├──  scout_ros2                 // Genbot-specific ROS2 packages
 |   |   ├── scout_base              // Core functions for Genbot
