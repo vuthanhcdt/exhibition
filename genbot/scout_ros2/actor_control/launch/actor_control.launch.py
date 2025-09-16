@@ -19,17 +19,6 @@ def generate_launch_description():
         LaunchConfiguration('config')
     ])
 
-    static_tf = launch_ros.actions.Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='static_tf_designed_point',
-        arguments=[
-            '0.3', '0.9', '0.0',          # x y z
-            '0', '0', '0',                # roll pitch yaw (rad)
-            'human_local_link', 'designed_point'
-        ],
-        output='screen'
-    )
 
     node = launch_ros.actions.Node(
         package='actor_control',
@@ -41,6 +30,5 @@ def generate_launch_description():
 
     return LaunchDescription([
         config_arg,
-        static_tf,
         node
     ])

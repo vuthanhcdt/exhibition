@@ -113,7 +113,6 @@ def generate_launch_description():
             {'use_sim_time': True},
         ]
     )
-
     # joint_state_publisher_gui_node = Node(
     #     package='joint_state_publisher_gui',
     #     executable='joint_state_publisher_gui',

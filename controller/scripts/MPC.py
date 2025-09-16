@@ -6,7 +6,7 @@ import tf2_ros
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import TransformStamped
 import math
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Pose
 from scipy.spatial.transform import Rotation as R
 import numpy as np
 from sensor_msgs.msg import LaserScan
@@ -111,8 +111,8 @@ class MPC(Node):
             10
         )
         self.human_subscriber = self.create_subscription(
-            Odometry,
-            '/human_global_pos',
+            Pose,
+            '/human_global_pose',
             self.human_callback,
             10
         )
@@ -126,8 +126,6 @@ class MPC(Node):
             self.human_callback,
             10
         )
-
-        self.create_subscription(OccupancyGrid, '/local_costmap/costmap', self.map_callback, 2)
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
@@ -169,14 +167,8 @@ class MPC(Node):
         self.robot_vel: np.ndarray = np.reshape([0.0, 0.0, 0.0], (3, 1))
 
         self.obs = None
-        self.map_origin_x = 0.0
-        self.map_origin_y = 0.0
-
-
-
 
   
-
     def laser_callback(self, msg):
         """ Xử lý dữ liệu LaserScan mà không dùng vòng lặp """
         if self.robot_x is None:
@@ -220,28 +212,19 @@ class MPC(Node):
         self.robot_pos = np.reshape([self.robot_x, self.robot_y, self.robot_theta], (3, 1))
         self.robot_vel: np.ndarray = np.reshape([msg.twist.twist.linear.x,msg.twist.twist.linear.y,msg.twist.twist.angular.z], (3, 1))
 
-    def map_callback(self, msg):
-        """Callback function to process the occupancy grid map when it is received."""
-        self.map_resolution =  msg.info.resolution
-        self.map_origin_x =  msg.info.origin.position.x
-        self.map_origin_y =  msg.info.origin.position.y
-        self.map_height =  msg.info.height
-        self.map_width =  msg.info.width
-        self.obs = msg.data
-
-        # print( self.map_resolution,self.map_origin_x,self.map_origin_y ,self.map_height,self.map_width)
-
+   
 
     def human_callback(self, msg):
         """Hàm callback nhận dữ liệu từ /odom"""
-        self.human_x = msg.pose.pose.position.x
-        self.human_y = msg.pose.pose.position.y
-        self.human_theta = self.quaternion_to_yaw([msg.pose.pose.orientation.x, msg.pose.pose.orientation.y,msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])
+        self.human_x = msg.position.x
+        self.human_y = msg.position.y
+        self.human_theta = self.quaternion_to_yaw([msg.orientation.x, msg.orientation.y,msg.orientation.z, msg.orientation.w])
 
 
         # Chuyển đổi sang hệ tọa độ odom
         self.goal_x = self.human_x + 0.0 * np.cos(self.human_theta) - 1.5 * np.sin(self.human_theta)
         self.goal_y = self.human_y + 0.0 * np.sin(self.human_theta) + 1.5 * np.cos(self.human_theta)
+        print(self.goal_x,self.goal_y)
 
 
 

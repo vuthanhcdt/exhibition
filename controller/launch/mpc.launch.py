@@ -19,14 +19,14 @@ def exit_process_function(_launch_context):
 def generate_launch_description():
     # Path to params.yaml
     config = os.path.join(
-        get_package_share_directory('comparison'),
+        get_package_share_directory('controller'),
         'config',
         'params.yaml'
     )
 
     # Node definition
     node = Node(
-        package='comparison',
+        package='controller',
         executable='MPC.py',
         output='screen',
         emulate_tty=True,
