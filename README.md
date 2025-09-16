@@ -8,7 +8,7 @@ These packages were developed by [Thanh](https://sites.google.com/view/vuthanhcd
 
 This project is built on the Agilex Scout Mini Omni platform. The directory structure is as follows:
 ```
-exhibition/
+ral/
 ├── genbot                          // Original packages
 │   ├──  scout_ros2                 // Genbot-specific ROS2 packages
 |   |   ├── scout_base              // Core functions for Genbot
@@ -16,10 +16,8 @@ exhibition/
 |   |   ├── scout_simulation        // Simulation environment for Genbot
 |   |   ├── ugv_sdk                 // Data transmission protocol for Genbot
 |   |   ├── actor_control           // Control actor on Gazebo
-|   ├── lidar3d                     // Velodyne-related packages
+|   ├── velodyne                    // Velodyne-related packages
 |   ├── amfitrack                   // Amfitrack packages
-|   ├── zed                         // Zed camera packages
-├── vlm_strategy                    // VLM strategy
 ├── mppi_controller                 // Human-companion controller
 ├── README.md
 
@@ -86,36 +84,78 @@ sudo apt-get install ros-$ROS_DISTRO-joy ros-$ROS_DISTRO-teleop-twist-joy \
 
 Run the following commands to set up the workspace and install the required packages:
 ```bash
-mkdir -p ~/exhibition_ws/src
-cd ~/exhibition_ws/src/
-git clone git@github.com:vuthanhcdt/exhibition.git
-cd ~/exhibition_ws
+mkdir -p ~/ral_ws/src
+cd ~/ral_ws/src/
+git clone git@github.com:vuthanhcdt/ral.git
+cd ~/ral_ws
 rosdep install --from-paths src --ignore-src -r -y
 colcon build --symlink-install
-echo "source ~/exhibition_ws/install/setup.bash" >> ~/.bashrc
+echo "source ~/ral_ws/install/setup.bash" >> ~/.bashrc
 pip3 install pytorch-mppi
 ```
-
 
 ## Simulation 
 #### Simulation S1
 ```bash
-ros2 launch scout_simulation test.launch.py 
-ros2 launch actor_control actor_control.launch.py config:=test_params.yaml
-ros2 launch controller mpc.launch.py
+ros2 launch scout_simulation s1.launch.py 
+ros2 launch actor_control actor_control.launch.py config:=s1_params.yaml
+ros2 launch actor_control actor_control.launch.py config:=s1_ped_params.yaml
+ros2 launch mppi_controller mppi_controller.launch.py config:=params_gazebo_s1.yaml
 ```
 
-## Experiment
+#### Simulation S2
+```bash
+ros2 launch scout_simulation s2.launch.py 
+ros2 launch actor_control actor_control.launch.py config:=s2_params.yaml
+ros2 launch actor_control actor_control.launch.py config:=s2_ped_params.yaml
+ros2 launch mppi_controller mppi_controller.launch.py config:=params_gazebo_s2.yaml
+```
+
+
+#### Simulation S3
+```bash
+ros2 launch scout_simulation s3.launch.py 
+ros2 launch actor_control actor_control.launch.py config:=s3_params.yaml
+ros2 launch actor_control actor_control.launch.py config:=s3_ped_params.yaml
+ros2 launch mppi_controller mppi_controller.launch.py config:=params_gazebo_s3.yaml
+```
+
+#### Simulation S4
+```bash
+ros2 launch scout_simulation s4.launch.py 
+ros2 launch actor_control actor_control.launch.py config:=s4_params.yaml
+ros2 launch actor_control actor_control.launch.py config:=s4_ped_params.yaml
+ros2 launch mppi_controller mppi_controller.launch.py config:=params_gazebo_s4.yaml
+```
+
+#### Simulation S5
+```bash
+ros2 launch scout_simulation s5.launch.py 
+ros2 launch actor_control actor_control.launch.py config:=s5_params.yaml
+ros2 launch actor_control actor_control.launch.py config:=s5_ped_params.yaml
+ros2 launch mppi_controller mppi_controller.launch.py config:=params_gazebo_s5.yaml
+```
+
+#### Gazebo GUI Tip
+```bash
+# Follow a model in the GUI (e.g., a model named "human")
+gz service -s /gui/follow --reqtype gz.msgs.StringMsg  --reptype gz.msgs.Boolean  --timeout 2000   --req 'data: "human"'
+# Set camera offset relative to the followed model
+gz service -s /gui/follow/offset --reqtype gz.msgs.Vector3d  --reptype gz.msgs.Boolean --timeout 2000  --req 'x: -3  y: 0  z: 2'
+```
+
+## Experiment 
 ```bash
 ros2 launch scout_simulation robot_experiment.launch.py 
 ros2 launch scout_base scout_mini_omni_base.launch.py publish_tf:=false
+ros2 launch gimbal_bringup gimbal_bringup.launch.py 
 ros2 launch lidar3d rviz_MID360_launch.py 
 ros2 launch zed_multi_camera zed_multi_camera.launch.py cam_names:='[zed_vlm, zed_gimbal]' cam_models:='[zedx,zedx]' cam_serials:='[44820006,43870948]' disable_tf:=False body_tracking:='[false,true]' object_detection:='[true,false]'
 ros2 launch amfitrack amfitrack.launch.py
+ros2 launch gimbal_bringup gimbal_tracking.launch.py 
 ```
 
-
 ## TODO
-- [Companion Controller for Non-Holonomic Robots]
-- [ ]
-- [ ]
+- [ ] Human tracking with amfitrack and gimbal camera
+- [ ] 
+- [ ] 

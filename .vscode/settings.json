@@ -1,0 +1,22 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/vuthanhcdt/exhibition_ws/install/gimbal_bringup/lib/python3.12/site-packages",
+        "/home/vuthanhcdt/exhibition_ws/install/zed_msgs/lib/python3.12/site-packages",
+        "/home/vuthanhcdt/exhibition_ws/install/scout_msgs/lib/python3.12/site-packages",
+        "/home/vuthanhcdt/exhibition_ws/install/controller/lib/python3.12/site-packages",
+        "/home/vuthanhcdt/exhibition_ws/install/comparison/lib/python3.12/site-packages",
+        "/home/vuthanhcdt/exhibition_ws/install/amfitrack/lib/python3.12/site-packages",
+        "/home/vuthanhcdt/exhibition_ws/install/actor_control/lib/python3.12/site-packages",
+        "/opt/ros/jazzy/lib/python3.12/site-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/vuthanhcdt/exhibition_ws/install/gimbal_bringup/lib/python3.12/site-packages",
+        "/home/vuthanhcdt/exhibition_ws/install/zed_msgs/lib/python3.12/site-packages",
+        "/home/vuthanhcdt/exhibition_ws/install/scout_msgs/lib/python3.12/site-packages",
+        "/home/vuthanhcdt/exhibition_ws/install/controller/lib/python3.12/site-packages",
+        "/home/vuthanhcdt/exhibition_ws/install/comparison/lib/python3.12/site-packages",
+        "/home/vuthanhcdt/exhibition_ws/install/amfitrack/lib/python3.12/site-packages",
+        "/home/vuthanhcdt/exhibition_ws/install/actor_control/lib/python3.12/site-packages",
+        "/opt/ros/jazzy/lib/python3.12/site-packages"
+    ]
+}
