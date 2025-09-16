@@ -15,6 +15,30 @@ def generate_launch_description():
         'config',
         'params.yaml'
         )
+    
+    left_static_tf = launch_ros.actions.Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='static_tf_designed_point',
+        arguments=[
+            '0.7', '0.9', '0.0',          # x y z
+            '0', '0', '0',                # roll pitch yaw (rad)
+            'human_link', 'left_following'
+        ],
+        output='screen'
+    )
+
+    right_static_tf = launch_ros.actions.Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='static_tf_designed_point',
+        arguments=[
+            '0.7', '-0.9', '0.0',          # x y z
+            '0', '0', '0',                # roll pitch yaw (rad)
+            'human_link', 'right_following'
+        ],
+        output='screen'
+    )
 
     node = launch_ros.actions.Node(
         package='gimbal_bringup',
@@ -24,5 +48,7 @@ def generate_launch_description():
         parameters=[config])
     
     return LaunchDescription([
+        left_static_tf,
+        right_static_tf,
         node
     ])
