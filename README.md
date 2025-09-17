@@ -92,7 +92,7 @@ rosdep install --from-paths src --ignore-src -r -y
 colcon build --symlink-install
 echo "source ~/exhibition_ws/install/setup.bash" >> ~/.bashrc
 cd ~/exhibition_ws/src/exhibition
-uv init ai_agent --python 3.10 --bare
+uv init ai_agent --bare
 lk app env -w
 ```
 

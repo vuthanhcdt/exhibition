@@ -1,4 +1,4 @@
 ai_agent/.env.local
-ai_agent/uv.lock
+uv.lock
 ai_agent/.venv
-ai_agent/pyproject.toml
+pyproject.toml
