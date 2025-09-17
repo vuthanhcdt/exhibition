@@ -21,32 +21,11 @@ class LidarCollisionChecker(Node):
     def pointcloud_callback(self, msg: PointCloud2):
         try:
             # Convert PointCloud2 -> numpy (N,3)
-            points_gen = pc2.read_points(msg, field_names=('x', 'y', 'z'), skip_nans=True)
-            cloud_points = np.fromiter(points_gen, dtype=np.float32).reshape(-1, 3)
+            points = pc2.read_points(msg, field_names=('x', 'y', 'z'), skip_nans=True)
+            cloud_points = np.array([[p[0], p[1], p[2]] for p in points], dtype=np.float32)
         except Exception as e:
             self.get_logger().error(f"Error reading PointCloud data: {e}")
             return
-
-        if cloud_points.shape[0] == 0:
-            return
-
-        # Tính khoảng cách Euclidean
-        dists = np.linalg.norm(cloud_points, axis=1)
-
-        # Lọc điểm trong khoảng [min_dist, max_dist]
-        mask = (dists > self.min_dist) & (dists < self.max_dist)
-        valid_points = dists[mask]
-        count = valid_points.shape[0]
-
-        if count >= self.min_points:
-            nearest = np.min(valid_points)
-            self.get_logger().warn(
-                f"⚠️ Collision detected! {count} points within [{self.min_dist}, {self.max_dist}] m. Nearest = {nearest:.2f} m"
-            )
-        else:
-            self.get_logger().info(
-                f"No collision: only {count} points within [{self.min_dist}, {self.max_dist}] m"
-            )
 
 
 def main(args=None):
