@@ -119,7 +119,8 @@ uv add \
   "livekit-plugins-noise-cancellation~=0.2" \
   "python-dotenv"\
   "lark-parser"\
-  "empy"
+  "empy"\
+  "livekit-agents[anam]~=1.2"
 ```
 
 ## Experiment 
