@@ -9,6 +9,7 @@ from scout_msgs.msg import ScoutRCState
 import math, time
 from scipy.spatial.transform import Rotation as R
 import numpy as np
+from scout_msgs.msg import ScoutLightCmd
 
 class PIDController(Node):
     def __init__(self):
@@ -42,6 +43,12 @@ class PIDController(Node):
         self.rc_sub = self.create_subscription(ScoutRCState,'/scout_rc_state', self.rc_callback,5)
         self.follow_mode = 0
         self.robot_mode = 2  # 0: stop, 1: following, 2: dancing
+        self.light_pub = self.create_publisher(
+            ScoutLightCmd,
+            '/light_control',
+            10
+        )
+
 
     def human_state_callback(self, msg):
         self.human_state = msg.data
@@ -99,26 +106,28 @@ class PIDController(Node):
     def rc_callback(self, msg):
       self.follow_mode = msg.swa
 
-    def dancing(self):
-        # Lưu góc ban đầu khi bắt đầu nhảy
+    def dancing1(self):
+        # Số lần lắc đầu (mỗi lần sang trái/phải là 1 lần)
+        NUM_SWINGS = 6
+        # Góc lệch mỗi lần (radian)
+        SWING_ANGLE = math.radians(30)  # 30 độ sang mỗi bên
+
         if not hasattr(self, 'dance_start_angle'):
             try:
                 odom_tf = self.get_transform('odom', 'base_link')
                 if odom_tf is not None:
                     q = odom_tf.transform.rotation
-                    # Chuyển quaternion sang yaw
                     self.dance_start_angle = self.quaternion_to_yaw([q.x, q.y, q.z, q.w])
                     self.dance_start_time = self.get_clock().now().nanoseconds / 1e9
-                    # self.get_logger().info(f"Góc ban đầu (yaw): {math.degrees(self.dance_start_angle):.2f} độ")
+                    self.dance_swing_idx = 0
+                    self.dance_direction = 1  # 1: phải, -1: trái
+                    self.dance_waiting = False
                 else:
-                    return  # Không có odom, không thực hiện nhảy
+                    return
             except Exception as e:
                 self.get_logger().warn(f"Could not get odom for dancing: {e}")
                 return
-
-        t = self.get_clock().now().nanoseconds / 1e9
-        elapsed = t - self.dance_start_time
-
+            
         self.cmd = Twist()
         self.cmd.linear.x = 0.0
 
@@ -127,31 +136,101 @@ class PIDController(Node):
             if odom_tf is not None:
                 q = odom_tf.transform.rotation
                 current_angle = self.quaternion_to_yaw([q.x, q.y, q.z, q.w])
-                angle_error = self.dance_start_angle - current_angle
-                # Đưa về [-pi, pi]
-                angle_error = (angle_error + math.pi) % (2 * math.pi) - math.pi
             else:
                 return
         except Exception as e:
             self.get_logger().warn(f"Could not get odom for dancing: {e}")
             return
 
-        # Quay lắc đầu trong 5 giây
-        if elapsed < 5.0:
-            self.cmd.angular.z = 0.7 * math.sin(2 * math.pi * 0.5 * t)
+        # Tạo target angle cho từng lần lắc
+        if self.dance_swing_idx < NUM_SWINGS:
+            if not self.dance_waiting:
+                # Xác định góc mục tiêu cho lần lắc này
+                offset = SWING_ANGLE * self.dance_direction
+                self.dance_target_angle = self.dance_start_angle + offset
+                # Đưa về [-pi, pi]
+                self.dance_target_angle = (self.dance_target_angle + math.pi) % (2 * math.pi) - math.pi
+                self.dance_waiting = True
+
+            # Tính sai số góc
+            angle_error = (self.dance_target_angle - current_angle + math.pi) % (2 * math.pi) - math.pi
+
+            if abs(angle_error) > 0.03:
+                self.cmd.angular.z = max(min(3.0 * angle_error, 2.0), -2.0)
+                self.cmd_pub.publish(self.cmd)
+            else:
+                # Đã đến vị trí, đổi hướng cho lần tiếp theo
+                self.dance_direction *= -1
+                self.dance_swing_idx += 1
+                self.dance_waiting = False
+        else:
+            # Quay về góc ban đầu
+            angle_error = (self.dance_start_angle - current_angle + math.pi) % (2 * math.pi) - math.pi
+            if abs(angle_error) > 0.03:
+                self.cmd.angular.z = max(min(2.0 * angle_error, 0.7), -0.7)
+                self.cmd_pub.publish(self.cmd)
+            else:
+                self.robot_mode = 0
+                for attr in ['dance_start_angle', 'dance_start_time', 'dance_swing_idx', 'dance_direction', 'dance_waiting', 'dance_target_angle']:
+                    if hasattr(self, attr):
+                        delattr(self, attr)
+    def dancing2(self):
+        # Xoay liên tục trong 5 giây với tốc độ góc cố định, sau đó trở lại góc ban đầu
+        ROTATE_DURATION = 7.0  # giây
+        ROTATE_SPEED = 2.0     # rad/s
+
+        if not hasattr(self, 'dancing2_start_time'):
+            self.dancing2_start_time = self.get_clock().now().nanoseconds / 1e9
+            # Lưu lại góc ban đầu
+            odom_tf = self.get_transform('odom', 'base_link')
+            if odom_tf is not None:
+                q = odom_tf.transform.rotation
+                self.dancing2_start_angle = self.quaternion_to_yaw([q.x, q.y, q.z, q.w])
+            else:
+                self.dancing2_start_angle = 0.0  # fallback
+
+        elapsed = self.get_clock().now().nanoseconds / 1e9 - self.dancing2_start_time
+
+        self.cmd = Twist()
+        if elapsed < ROTATE_DURATION:
+            self.cmd.linear.x = 0.0
+            self.cmd.angular.z = ROTATE_SPEED
             self.cmd_pub.publish(self.cmd)
         else:
-            # Sau khi nhảy xong, quay trở lại góc ban đầu (không phụ thuộc thời gian)
-            if abs(angle_error) > 0.02:
-                self.cmd.angular.z = max(min(3.0 * angle_error, 0.7), -0.7)
-                self.cmd_pub.publish(self.cmd)
-                return
-            # Đã về vị trí ban đầu, chuyển sang chế độ stop
+            # Quay về góc ban đầu
+            odom_tf = self.get_transform('odom', 'base_link')
+            if odom_tf is not None:
+                q = odom_tf.transform.rotation
+                current_angle = self.quaternion_to_yaw([q.x, q.y, q.z, q.w])
+                angle_error = (self.dancing2_start_angle - current_angle + math.pi) % (2 * math.pi) - math.pi
+                if abs(angle_error) > 0.03:
+                    self.cmd.linear.x = 0.0
+                    self.cmd.angular.z = max(min(2.0 * angle_error, 0.7), -0.7)
+                    self.cmd_pub.publish(self.cmd)
+                    return
+            # Kết thúc chế độ dancing2
             self.robot_mode = 0
-            if hasattr(self, 'dance_start_angle'):
-                del self.dance_start_angle
-            if hasattr(self, 'dance_start_time'):
-                del self.dance_start_time
+            for attr in ['dancing2_start_time', 'dancing2_start_angle']:
+                if hasattr(self, attr):
+                    delattr(self, attr)
+
+    def light_off(self):
+        light_cmd = ScoutLightCmd()
+        light_cmd.cmd_ctrl_allowed = True
+        light_cmd.front_mode = 0  # LIGHT_CONST_OFF
+        light_cmd.front_custom_value = 0
+        light_cmd.rear_mode = 0   # LIGHT_CONST_OFF
+        light_cmd.rear_custom_value = 0
+        self.light_pub.publish(light_cmd)
+
+    def blink_light(self):
+        light_cmd = ScoutLightCmd()
+        light_cmd.cmd_ctrl_allowed = True
+        light_cmd.front_mode = 2  # LIGHT_BLINK
+        light_cmd.front_custom_value = 100  # Tần số nhấp nháy
+        light_cmd.rear_mode = 2   # LIGHT_BLINK
+        light_cmd.rear_custom_value = 100
+        self.light_pub.publish(light_cmd)
 
 
 
@@ -227,12 +306,13 @@ class PIDController(Node):
         # Chọn chế độ hoạt động: dancing, following, hay stop
         if self.robot_mode == 2:
             # Trường hợp nhảy (dancing)
-            self.dancing()
+            self.blink_light()
+            self.dancing2()
         elif self.robot_mode == 1:
-            # Trường hợp following (theo người)
+            self.light_off()
             self.following_mode()
         else:
-            # Trường hợp stop
+            self.light_off()
             self.cmd = Twist()
             self.cmd.linear.x = 0.0
             self.cmd.angular.z = 0.0
