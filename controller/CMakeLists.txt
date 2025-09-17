@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(pid_controller)
+project(controller)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -42,7 +42,8 @@ ament_python_install_package(${PROJECT_NAME})
 
 # Install Python executables
 install(PROGRAMS
-  scripts/pid_controller.py
+  scripts/controller.py
+  scripts/collision_detection.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

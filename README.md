@@ -119,7 +119,8 @@ ros2 launch lidar3d rviz_MID360_launch.py
 ros2 launch zed_multi_camera zed_multi_camera.launch.py cam_names:='[zed_vlm, zed_gimbal]' cam_models:='[zedx,zedx]' cam_serials:='[44820006,43870948]' disable_tf:=False body_tracking:='[false,true]' object_detection:='[true,false]'
 ros2 launch amfitrack amfitrack.launch.py
 ros2 launch gimbal_bringup gimbal_tracking.launch.py 
-ros2 launch pid_controller pid_controller.launch.py 
+ros2 launch controller controller.launch.py 
+ros2 launch controller collision_detection.launch.py 
 ```
 
 ## TODO

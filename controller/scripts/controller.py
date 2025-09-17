@@ -10,6 +10,7 @@ import math, time
 from scipy.spatial.transform import Rotation as R
 import numpy as np
 from scout_msgs.msg import ScoutLightCmd
+from std_msgs.msg import Bool
 
 class PIDController(Node):
     def __init__(self):
@@ -48,7 +49,19 @@ class PIDController(Node):
             '/light_control',
             10
         )
+
+        self.subscription = self.create_subscription(
+            Bool,
+            '/collision_state',
+            self.collision_callback,
+            10
+        )
+        
         self.dance_mode = 0
+
+    def collision_callback(self, msg: Bool):
+        if msg.data:
+            self.robot_mode = 0
 
 
     def human_state_callback(self, msg):
