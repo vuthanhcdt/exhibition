@@ -26,7 +26,7 @@ def generate_launch_description():
     
     # Ghép đường dẫn bằng Substitution ➜ an toàn ở runtime
     config_path = PathJoinSubstitution([
-        get_package_share_directory('pid_controller'),
+        get_package_share_directory('controller'),
         'config',
         LaunchConfiguration('config')
     ])
@@ -34,8 +34,8 @@ def generate_launch_description():
 
     # Node definition
     node = Node(
-        package='pid_controller',
-        executable='pid_controller.py',
+        package='controller',
+        executable='controller.py',
         output='screen',
         emulate_tty=True,
         parameters=[config_path]
@@ -48,7 +48,7 @@ def generate_launch_description():
             OnProcessExit(
                 target_action=node,
                 on_exit=[
-                    LogInfo(msg='PID exiting'),
+                    LogInfo(msg='Controller exiting'),
                     LogInfo(msg='Stopping robot'),
                     OpaqueFunction(
                         function=exit_process_function

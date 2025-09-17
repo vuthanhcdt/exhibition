@@ -21,8 +21,8 @@ class LidarCollisionChecker(Node):
         self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
 
         # Parameters
-        self.min_dist = 0.3
-        self.max_dist = 0.6
+        self.min_dist = 0.2
+        self.max_dist = 0.3
         self.min_points = 5
 
     def pointcloud_callback(self, msg: PointCloud2):

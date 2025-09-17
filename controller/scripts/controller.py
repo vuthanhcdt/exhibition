@@ -43,7 +43,7 @@ class PIDController(Node):
         )
         self.rc_sub = self.create_subscription(ScoutRCState,'/scout_rc_state', self.rc_callback,5)
         self.follow_mode = 0
-        self.robot_mode = 2  # 0: stop, 1: following, 2: dancing
+        self.robot_mode = 1  # 0: stop, 1: following, 2: dancing
         self.light_pub = self.create_publisher(
             ScoutLightCmd,
             '/light_control',
@@ -58,10 +58,10 @@ class PIDController(Node):
         )
         
         self.dance_mode = 0
+        self.collision = False
 
     def collision_callback(self, msg: Bool):
-        if msg.data:
-            self.robot_mode = 0
+            self.collision = msg.data
 
 
     def human_state_callback(self, msg):
@@ -290,31 +290,36 @@ class PIDController(Node):
             offset_distane = 1.0
 
         # Điều khiển robot theo transform gần nhất
-        if chosen_tf is not None:
-            error_x = chosen_tf.transform.translation.x
-            error_y = chosen_tf.transform.translation.y
-            distance = math.hypot(error_x, error_y)
-            linear_x = self.PID(distance - offset_distane, 1.0)  # Giữ khoảng cách 1.0m (bạn có thể đổi)
-            linear_x = max(min(linear_x, 2.0), -1.5)
-            relative_angle = math.atan2(error_y, error_x)
-            if error_x<-0.5:
-                linear_x = 0.0
-            # print(relative_angle)
-            angular_z = self.PID(relative_angle, 2.0)
-            angular_z = max(min(angular_z, 1.0), -1.0)
-            if center_dist>0.5:
-                if self.human_state == 1:
-                    self.cmd.linear.x = linear_x
-                    self.cmd.angular.z = angular_z
-                    self.cmd_pub.publish(self.cmd)
-                elif self.human_state == 0:
+        if self.collision==False:
+            if chosen_tf is not None:
+                error_x = chosen_tf.transform.translation.x
+                error_y = chosen_tf.transform.translation.y
+                distance = math.hypot(error_x, error_y)
+                linear_x = self.PID(distance - offset_distane, 1.0)  # Giữ khoảng cách 1.0m (bạn có thể đổi)
+                linear_x = max(min(linear_x, 2.0), -1.5)
+                relative_angle = math.atan2(error_y, error_x)
+                if error_x<-0.5:
+                    linear_x = 0.0
+                # print(relative_angle)
+                angular_z = self.PID(relative_angle, 2.0)
+                angular_z = max(min(angular_z, 1.0), -1.0)
+                if center_dist>0.5:
+                    if self.human_state == 1:
+                        self.cmd.linear.x = linear_x
+                        self.cmd.angular.z = angular_z
+                        self.cmd_pub.publish(self.cmd)
+                    elif self.human_state == 0:
+                        self.cmd.linear.x = 0.0
+                        self.cmd.angular.z = 0.0
+                        self.cmd_pub.publish(self.cmd)
+                else:
                     self.cmd.linear.x = 0.0
                     self.cmd.angular.z = 0.0
                     self.cmd_pub.publish(self.cmd)
-            else:
-                self.cmd.linear.x = 0.0
-                self.cmd.angular.z = 0.0
-                self.cmd_pub.publish(self.cmd)
+        else:
+            self.cmd.linear.x = 0.0
+            self.cmd.angular.z = 0.0
+            self.cmd_pub.publish(self.cmd)
 
 
     def timer_callback(self):
