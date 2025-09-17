@@ -16,7 +16,7 @@ class LidarCollisionChecker(Node):
         # Parameters
         self.min_dist = 0.3    # m
         self.max_dist = 2.0    # m
-        self.min_points = 50   # số điểm tối thiểu để coi là va chạm
+        self.min_points = 10   # số điểm tối thiểu để coi là va chạm
 
     def pointcloud_callback(self, msg: PointCloud2):
         try:
@@ -30,9 +30,11 @@ class LidarCollisionChecker(Node):
             # Lọc điểm có khoảng cách trong [0.3, 0.6]
             mask = (dists > 0.3) & (dists < 0.6)
             num_points = np.count_nonzero(mask)
+            if num_points > self.min_points:
+                self.get_logger().warn("Cảnh báo: Phát hiện va chạm!")
+            else:
+                self.get_logger().info("An toàn: Không phát hiện va chạm.")
 
-            # In/log số điểm tìm được
-            self.get_logger().info(f"Số điểm trong khoảng 0.3 - 0.6 m: {num_points}")
 
         except Exception as e:
             self.get_logger().error(f"Error reading PointCloud data: {e}")
