@@ -98,7 +98,7 @@ pip3 install pytorch-mppi
 ```bash
 ros2 launch scout_simulation exhibition.launch.py 
 ros2 launch actor_control actor_control.launch.py config:=s1_params.yaml
-ros2 launch pid_controller pid_controller.launch.py 
+ros2 launch controller controller.launch.py 
 ```
 
 
@@ -121,6 +121,8 @@ ros2 launch amfitrack amfitrack.launch.py
 ros2 launch gimbal_bringup gimbal_tracking.launch.py 
 ros2 launch controller controller.launch.py 
 ros2 launch controller collision_detection.launch.py 
+uv run ~/exhibition_ws/src/exhibition/ai_agent/agent.py console
+
 ```
 
 ## TODO

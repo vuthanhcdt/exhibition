@@ -11,6 +11,7 @@ from scipy.spatial.transform import Rotation as R
 import numpy as np
 from scout_msgs.msg import ScoutLightCmd
 from std_msgs.msg import Bool
+from std_msgs.msg import String
 
 class PIDController(Node):
     def __init__(self):
@@ -50,10 +51,17 @@ class PIDController(Node):
             10
         )
 
-        self.subscription = self.create_subscription(
+        self.collisionsubscription = self.create_subscription(
             Bool,
             '/collision_state',
             self.collision_callback,
+            10
+        )
+
+        self.genbot_subscription = self.create_subscription(
+            String,
+            '/genbot',
+            self.genbot_callback,
             10
         )
         
@@ -63,6 +71,20 @@ class PIDController(Node):
     def collision_callback(self, msg: Bool):
             self.collision = msg.data
 
+    def genbot_callback(self, msg: String):
+        if msg.data == "dance1":
+            self.robot_mode = 2
+            self.dance_mode = 0
+        elif msg.data == "dance2":
+            self.robot_mode = 2
+            self.dance_mode = 1
+        elif msg.data == "follow":
+            self.robot_mode = 1
+        elif msg.data == "stop":
+            self.robot_mode = 0
+
+
+        self.get_logger().info(f"Received genbot message: {msg.data}")
 
     def human_state_callback(self, msg):
         self.human_state = msg.data
