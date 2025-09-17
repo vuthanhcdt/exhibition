@@ -16,8 +16,8 @@ from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from geometry_msgs.msg import Twist, Pose,  Point, Quaternion
 from nav_msgs.msg import Odometry
-from std_msgs.msg import Int32
-
+from std_msgs.msg import Int32, Float32
+from scout_msgs.msg import ScoutRCState
 
 class GimbalTracking(Node):
     def __init__(self):
@@ -66,8 +66,23 @@ class GimbalTracking(Node):
         self.human_global.header.frame_id="odom"
         self.human_global.child_frame_id="human_link"
         self.raw_output = 0.0
+        self.rc_sub = self.create_subscription(ScoutRCState,'/scout_rc_state', self.rc_callback,5)
+        self.init_mode = 0
 
+        self.encoder_subscriber = self.create_subscription(
+            Float32,
+            'gimbal_encoder',
+            self.encoder_callback,
+            10
+        )
+        self.encoder_value = 0.0  # Lưu giá trị encoder mới nhất
 
+    
+    def rc_callback(self, msg):
+      self.init_mode = msg.swd
+
+    def encoder_callback(self, msg):
+        self.encoder_value = msg.data
 
     def _interactive_space(self):
         # Tạo MarkerArray từ ellipse quanh người
@@ -141,7 +156,9 @@ class GimbalTracking(Node):
         max_tracking_distance = 3.0  # Giới hạn khoảng cách để tracking
         reacquire_distance = 2.0     # Khoảng cách tối đa để tìm người mới nếu bị mất quá lâu
 
+        # Get the current time for tracking lost timeout logic
         now = self.get_clock().now()
+        
 
         # Nếu đã mất tracking quá 15s thì reset locked_id để tìm người mới
         if self.locked_id is not None and not self.detect_human:
@@ -223,34 +240,56 @@ class GimbalTracking(Node):
 
 
     def timer_callback(self):
-        if self.detect_human and self.human is not None:
-            self.raw_output = self.human.position[1]
-            # if abs(raw_output)<0.1:
-            #     control = 0.0
+        if self.init_mode == 0:
+            msg = Float32()
+            msg.data = 0.0
+            Kp = 2.0
+            Kd = 0.2
+            setpoint = 0.0  # target angle (degree or rad, depends on encoder)
+            # Calculate error and derivative
+            error = setpoint - self.encoder_value
+            if not hasattr(self, 'last_error'):
+                self.last_error = 0.0
+            derivative = error - self.last_error
+            self.last_error = error
+            # PD control output
+            control = Kp * error + Kd * derivative
+            # Publish control to gimbal
+            msg = Float32()
+            msg.data = control
+            self.gimbal_pub.publish(msg)
+            self.detect_human = False
+            self.locked_id = None
+            return
+        elif self.init_mode == 2:
+            if self.detect_human and self.human is not None:
+                self.raw_output = self.human.position[1]
+                # if abs(raw_output)<0.1:
+                #     control = 0.0
+                # else:
+                self.filtered_output = self.alpha * self.raw_output + (1 - self.alpha) * self.filtered_output
+                control = float(2.0*self.filtered_output)
+                msg = Float32()
+                msg.data = control
+                self.linear_x = float(self.human.velocity[0])
+                self.linear_y = float(self.human.velocity[1])
+                self.angular_velocity = float(self.human.velocity[2])
+                self.gimbal_pub.publish(msg)
+                # Publish TF
+                self.publish_human_tf()
+            elif self.detect_human == False and self.human is not None:
+                # print(self.human)
+                msg = Float32()
+                control = float(3.0 * np.sign(self.human.position[1]))
+                msg.data = control
+                self.gimbal_pub.publish(msg)
+                self.publish_human_tf()
             # else:
-            self.filtered_output = self.alpha * self.raw_output + (1 - self.alpha) * self.filtered_output
-            control = float(2.0*self.filtered_output)
-            msg = Float32()
-            msg.data = control
-            self.linear_x = float(self.human.velocity[0])
-            self.linear_y = float(self.human.velocity[1])
-            self.angular_velocity = float(self.human.velocity[2])
-            self.gimbal_pub.publish(msg)
-            # Publish TF
-            self.publish_human_tf()
-        elif self.detect_human == False and self.human is not None:
-            # print(self.human)
-            msg = Float32()
-            control = float(3.0 * np.sign(self.human.position[1]))
-            msg.data = control
-            self.gimbal_pub.publish(msg)
-            self.publish_human_tf()
-        # else:
-        #     print(self.human)
-        #     msg = Float32()
-        #     msg.data = 0.0
-        #     self.gimbal_pub.publish(msg)
-        #     self.publish_human_tf()
+            #     print(self.human)
+            #     msg = Float32()
+            #     msg.data = 0.0
+            #     self.gimbal_pub.publish(msg)
+            #     self.publish_human_tf()
 
         if self.human is not None:
             try:
