@@ -6,7 +6,9 @@ import math
 from tf2_ros import TransformListener, Buffer, LookupException, ConnectivityException, ExtrapolationException
 from std_msgs.msg import Int32
 from scout_msgs.msg import ScoutRCState
-
+import math, time
+from scipy.spatial.transform import Rotation as R
+import numpy as np
 
 class PIDController(Node):
     def __init__(self):
@@ -39,10 +41,23 @@ class PIDController(Node):
         )
         self.rc_sub = self.create_subscription(ScoutRCState,'/scout_rc_state', self.rc_callback,5)
         self.follow_mode = 0
+        self.robot_mode = 2  # 0: stop, 1: following, 2: dancing
+
     def human_state_callback(self, msg):
         self.human_state = msg.data
         # self.get_logger().info(f"Received human_state: {self.human_state}")
         
+    
+    @staticmethod
+    def quaternion_to_yaw(quaternion):
+        """Extract yaw angle from a quaternion."""
+        return R.from_quat(quaternion).as_euler('xyz')[2]
+    
+    @staticmethod
+    def yaw_to_quaternion(yaw: float) -> np.ndarray:
+        """Converts a yaw angle (in radians) to a quaternion."""
+        return R.from_euler('xyz', [0.0, 0.0, yaw], degrees=False).as_quat()
+    
 
     def PID(self, error, Kp):
         output = Kp * error
@@ -84,8 +99,63 @@ class PIDController(Node):
     def rc_callback(self, msg):
       self.follow_mode = msg.swa
 
+    def dancing(self):
+        # Lưu góc ban đầu khi bắt đầu nhảy
+        if not hasattr(self, 'dance_start_angle'):
+            try:
+                odom_tf = self.get_transform('odom', 'base_link')
+                if odom_tf is not None:
+                    q = odom_tf.transform.rotation
+                    # Chuyển quaternion sang yaw
+                    self.dance_start_angle = self.quaternion_to_yaw([q.x, q.y, q.z, q.w])
+                    self.dance_start_time = self.get_clock().now().nanoseconds / 1e9
+                    # self.get_logger().info(f"Góc ban đầu (yaw): {math.degrees(self.dance_start_angle):.2f} độ")
+                else:
+                    return  # Không có odom, không thực hiện nhảy
+            except Exception as e:
+                self.get_logger().warn(f"Could not get odom for dancing: {e}")
+                return
 
-    def timer_callback(self):
+        t = self.get_clock().now().nanoseconds / 1e9
+        elapsed = t - self.dance_start_time
+
+        self.cmd = Twist()
+        self.cmd.linear.x = 0.0
+
+        try:
+            odom_tf = self.get_transform('odom', 'base_link')
+            if odom_tf is not None:
+                q = odom_tf.transform.rotation
+                current_angle = self.quaternion_to_yaw([q.x, q.y, q.z, q.w])
+                angle_error = self.dance_start_angle - current_angle
+                # Đưa về [-pi, pi]
+                angle_error = (angle_error + math.pi) % (2 * math.pi) - math.pi
+            else:
+                return
+        except Exception as e:
+            self.get_logger().warn(f"Could not get odom for dancing: {e}")
+            return
+
+        # Quay lắc đầu trong 5 giây
+        if elapsed < 5.0:
+            self.cmd.angular.z = 0.7 * math.sin(2 * math.pi * 0.5 * t)
+            self.cmd_pub.publish(self.cmd)
+        else:
+            # Sau khi nhảy xong, quay trở lại góc ban đầu (không phụ thuộc thời gian)
+            if abs(angle_error) > 0.02:
+                self.cmd.angular.z = max(min(3.0 * angle_error, 0.7), -0.7)
+                self.cmd_pub.publish(self.cmd)
+                return
+            # Đã về vị trí ban đầu, chuyển sang chế độ stop
+            self.robot_mode = 0
+            if hasattr(self, 'dance_start_angle'):
+                del self.dance_start_angle
+            if hasattr(self, 'dance_start_time'):
+                del self.dance_start_time
+
+
+
+    def following_mode(self):
         right_tf = self.get_transform('base_link', 'right_following')
         left_tf = self.get_transform('base_link', 'left_following')
         center_tf = self.get_transform('base_link', 'human_link')
@@ -151,6 +221,25 @@ class PIDController(Node):
                 self.cmd.linear.x = 0.0
                 self.cmd.angular.z = 0.0
                 self.cmd_pub.publish(self.cmd)
+
+
+    def timer_callback(self):
+        # Chọn chế độ hoạt động: dancing, following, hay stop
+        if self.robot_mode == 2:
+            # Trường hợp nhảy (dancing)
+            self.dancing()
+        elif self.robot_mode == 1:
+            # Trường hợp following (theo người)
+            self.following_mode()
+        else:
+            # Trường hợp stop
+            self.cmd = Twist()
+            self.cmd.linear.x = 0.0
+            self.cmd.angular.z = 0.0
+            self.cmd_pub.publish(self.cmd)
+            return
+        
+        
 
 
 def main(args=None):
