@@ -91,7 +91,9 @@ cd ~/exhibition_ws
 rosdep install --from-paths src --ignore-src -r -y
 colcon build --symlink-install
 echo "source ~/exhibition_ws/install/setup.bash" >> ~/.bashrc
-pip3 install pytorch-mppi
+cd ~/exhibition_ws/src/exhibition
+uv init ai_agent --bare
+lk app env -w
 ```
 
 ## Simulation 
