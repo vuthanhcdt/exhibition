@@ -42,9 +42,9 @@ class PIDController(Node):
             self.human_state_callback,
             10
         )
-        self.rc_sub = self.create_subscription(ScoutRCState,'/scout_rc_state', self.rc_callback,5)
+        # self.rc_sub = self.create_subscription(ScoutRCState,'/scout_rc_state', self.rc_callback,5)
         self.follow_mode = 0
-        self.robot_mode = 1  # 0: stop, 1: following, 2: dancing
+        self.robot_mode = 0  # 0: stop, 1: following, 2: dancing
         self.light_pub = self.create_publisher(
             ScoutLightCmd,
             '/light_control',
@@ -345,6 +345,7 @@ class PIDController(Node):
 
 
     def timer_callback(self):
+        # print(self.robot_mode,self.dance_mode)
         # Chọn chế độ hoạt động: dancing, following, hay stop
         if self.robot_mode == 2:
             # Trường hợp nhảy (dancing)

@@ -27,6 +27,7 @@ class Assistant(Agent):
         self.pub = self.node.create_publisher(String, "/genbot", 10)
 
         self.timer = self.node.create_timer(1.0, self.timer_callback)
+        self.dance = None
 
     def timer_callback(self):
         msg = String()
@@ -37,14 +38,35 @@ class Assistant(Agent):
     # all functions annotated with @function_tool will be passed to the LLM when this
     # agent is active
     @function_tool
-    async def lookup_dance(self, context: RunContext, location: str):
+    async def lookup_dance(self, context: RunContext):
         """Perform a random dance.
 
         Each time this is called, it randomly chooses between 'dance1' and 'dance2'.
         """
 
         dance = random.choice(["dance1", "dance2"])
+        self.dance = dance
         logger.info(f"Performing {dance}")
+
+        # Publish to ROS2
+        msg = String()
+        msg.data = dance
+        self.pub.publish(msg)
+
+        return f"Performing {dance}."
+
+    @function_tool
+    async def lookup_difference_dance(self, context: RunContext):
+        """Perform a different dance.
+
+        Chooses a dance that is different from the previous one.
+        """
+        if self.dance == "dance1":
+            dance = "dance2"
+        else:
+            dance = "dance1"
+
+        logger.info(f"Performing {dance}.")
 
         # Publish to ROS2
         msg = String()

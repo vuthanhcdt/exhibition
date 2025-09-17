@@ -92,7 +92,7 @@ rosdep install --from-paths src --ignore-src -r -y
 colcon build --symlink-install
 echo "source ~/exhibition_ws/install/setup.bash" >> ~/.bashrc
 cd ~/exhibition_ws/src/exhibition
-uv init ai_agent --bare
+uv init ai_agent --python 3.10 --bare
 lk app env -w
 ```
 
@@ -112,11 +112,9 @@ gz service -s /gui/follow --reqtype gz.msgs.StringMsg  --reptype gz.msgs.Boolean
 gz service -s /gui/follow/offset --reqtype gz.msgs.Vector3d  --reptype gz.msgs.Boolean --timeout 2000  --req 'x: -3  y: 0  z: 2'
 ```
 
+## Livekit 
 ```bash
 uv add \
-  "livekit-agents[deepgram,openai,cartesia,silero,turn-detector]~=1.2" \
-  "livekit-plugins-noise-cancellation~=0.2" \
-  "python-dotenv"\
   "livekit-agents[openai]~=1.2" \
   "livekit-plugins-noise-cancellation~=0.2" \
   "python-dotenv"\
@@ -135,7 +133,7 @@ ros2 launch amfitrack amfitrack.launch.py
 ros2 launch gimbal_bringup gimbal_tracking.launch.py 
 ros2 launch controller controller.launch.py 
 ros2 launch controller collision_detection.launch.py 
-uv run ~/exhibition_ws/src/exhibition/ai_agent/agent.py console
+uv run agent.py console
 ```
 
 ## TODO
