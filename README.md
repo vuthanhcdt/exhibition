@@ -135,6 +135,9 @@ ros2 launch gimbal_bringup gimbal_tracking.launch.py
 ros2 launch controller controller.launch.py 
 ros2 launch controller collision_detection.launch.py 
 uv run agent.py console
+uv run agent.py dev
+uv run agent_avatar.py dev
+npm run dev
 ```
 
 ## TODO
