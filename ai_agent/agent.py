@@ -34,18 +34,9 @@ class Assistant(Agent):
 
         # Publisher example: send messages to a topic
         self.pub = self.node.create_publisher(String, "/genbot", 10)
-
-        self.timer = self.node.create_timer(1.0, self.timer_callback)
         self.dance = None
 
-    def timer_callback(self):
-        """Publish a periodic heartbeat signal to ROS2."""
-        msg = String()
-        msg.data = "Heartbeat from Genbot"
-        self.pub.publish(msg)
-        logger.info("Published heartbeat message")
-
-    # All functions annotated with @function_tool will be exposed to the LLM
+     # All functions annotated with @function_tool will be exposed to the LLM
     @function_tool
     async def lookup_dance(self, context: RunContext):
         """Perform a random dance.

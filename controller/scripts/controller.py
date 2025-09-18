@@ -67,6 +67,7 @@ class PIDController(Node):
         
         self.dance_mode = 0
         self.collision = False
+        self.human_state = 1
 
     def collision_callback(self, msg: Bool):
             self.collision = msg.data
